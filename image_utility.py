@@ -68,9 +68,8 @@ def rename_videos(topic_name):
 
 if __name__ == '__main__':
     TOPIC_DATA = {
-        'name': 'countries',
-        'additional_keywords': ['flag']
+        'name': 'celebrities',
     }
-    download_images_from_topic(TOPIC_DATA)
+    #download_images_from_topic(TOPIC_DATA)
     #resize_images(f"{TOPIC_DATA['name']}/images")
-    #rename_videos(TOPIC_DATA['name'])
+    rename_videos(TOPIC_DATA['name'])
