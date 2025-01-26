@@ -1,5 +1,6 @@
-from better_bing_image_downloader import downloader
 from PIL import Image
+from bs4 import BeautifulSoup
+import requests
 import pandas as pd
 import re
 import os 
@@ -11,9 +12,8 @@ def get_keywords_from_excel_file(file_name, additional_keywords):
 
 def download_images_from_topic(topic_data):
     topic_name = topic_data['name'] 
-
     if os.path.exists(f"{topic_name}/images"):
-        os.rmdir(f"{topic_name}/images")
+        shutil.rmtree(f"{topic_name}/images")
         
     os.makedirs(f"{topic_name}/images")
 
@@ -21,27 +21,27 @@ def download_images_from_topic(topic_data):
 
     images_downloaded = []
     for keyword in keywords:
-        keyword_folder = os.path.join(f"{topic_name}/images", keyword)
-        requests_made = 0
-        while (not os.path.exists(keyword_folder) or len(os.listdir(keyword_folder)) == 0) and requests_made < 50:
-            downloader(
-                query=keyword,
-                limit=1,
-                output_dir=f"{topic_name}/images",
-                force_replace=True,
-                verbose=False
-            )
-            requests_made += 1
+        url = f"https://www.google.com/search?q={keyword}&tbm=isch"
+        headers = {
+            "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
+        }
+        
+        response = requests.get(url, headers=headers)
+        soup = BeautifulSoup(response.text, 'html.parser')
+        img_tags = soup.find_all("img")
 
-        for file_name in os.listdir(keyword_folder):
-            images_downloaded.append(keyword)
-            source = os.path.join(keyword_folder, file_name)
-            destination = os.path.join(f"{topic_name}/images", f"{keyword}.jpg")
-            shutil.move(source, destination)
-        os.rmdir(keyword_folder)
+        for img in img_tags:
+            img_url = img.get("src")
+            if img_url and img_url.startswith("http"):
+                img_data = requests.get(img_url).content
+                with open(f"{topic_name}/images/{keyword}.jpg", 'wb') as handler:
+                    handler.write(img_data)
+                break
+
+        print(f"Downloaded image for {keyword}!")
+        images_downloaded.append(keyword)
     
     print(f"{len(images_downloaded)} images downloaded for topic {topic_name}!")
-    resize_images(f"{topic_name}/images")
 
 def resize_images(directory_path):
     for file_name in os.listdir(directory_path):
@@ -68,8 +68,9 @@ def rename_videos(topic_name):
 
 if __name__ == '__main__':
     TOPIC_DATA = {
-        'name': 'underwater_and_sea',
+        'name': 'countries',
+        'additional_keywords': ['flag']
     }
-    #download_images_from_topic(TOPIC_DATA)
+    download_images_from_topic(TOPIC_DATA)
     #resize_images(f"{TOPIC_DATA['name']}/images")
     #rename_videos(TOPIC_DATA['name'])
