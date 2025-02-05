@@ -10,7 +10,7 @@ def get_keywords_from_excel_file(file_name, additional_keywords):
     data_frame = pd.read_excel(file_name)
     return [f"{keyword} {" ".join(additional_keywords)}".strip() for keyword in data_frame['Subject'].tolist()]
 
-def download_images_from_topic(topic_data):
+def download_wiki_images_from_topic(topic_data):
     topic_name = topic_data['name'] 
     if os.path.exists(f"{topic_name}/images"):
         shutil.rmtree(f"{topic_name}/images")
@@ -21,25 +21,24 @@ def download_images_from_topic(topic_data):
 
     images_downloaded = []
     for keyword in keywords:
-        url = f"https://www.google.com/search?q={keyword}&tbm=isch"
+        url = f"https://en.wikipedia.org/wiki/{keyword}"
         headers = {
             "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 (KHTML, like Gecko) Chrome/58.0.3029.110 Safari/537.3"
         }
         
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
-        img_tags = soup.find_all("img")
-
-        for img in img_tags:
-            img_url = img.get("src")
-            if img_url and img_url.startswith("http"):
-                img_data = requests.get(img_url).content
-                with open(f"{topic_name}/images/{keyword}.jpg", 'wb') as handler:
-                    handler.write(img_data)
-                break
-
-        print(f"Downloaded image for {keyword}!")
-        images_downloaded.append(keyword)
+        img_tag = soup.find("table", {"class": "infobox"}).find("img")
+        
+        if img_tag:
+            img_url = "https:" + img_tag.get("src")
+            img_data = requests.get(img_url).content
+            with open(f"{topic_name}/images/{keyword}.jpg", 'wb') as handler:
+                handler.write(img_data)
+            print(f"Downloaded wiki image for {keyword}!")
+            images_downloaded.append(keyword)
+        else:
+            print(f"Could not find wiki image for {keyword}.")
     
     print(f"{len(images_downloaded)} images downloaded for topic {topic_name}!")
 
@@ -70,6 +69,6 @@ if __name__ == '__main__':
     TOPIC_DATA = {
         'name': 'celebrities',
     }
-    #download_images_from_topic(TOPIC_DATA)
+    download_wiki_images_from_topic(TOPIC_DATA)
     #resize_images(f"{TOPIC_DATA['name']}/images")
-    rename_videos(TOPIC_DATA['name'])
+    #rename_videos(TOPIC_DATA['name'])
