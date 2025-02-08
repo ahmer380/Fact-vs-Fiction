@@ -28,11 +28,21 @@ def download_wiki_images_from_topic(topic_data):
         
         response = requests.get(url, headers=headers)
         soup = BeautifulSoup(response.text, 'html.parser')
-        img_tag = soup.find("table", {"class": "infobox"}).find("img")
         
-        if img_tag:
-            img_url = "https:" + img_tag.get("src")
-            img_data = requests.get(img_url).content
+        infobox = soup.find("table", {"class": "infobox"})
+        og_image = soup.find("meta", property="og:image")
+        if infobox:
+            img_url = "https:" + infobox.find("img").get("src")
+        elif og_image:
+            img_url = og_image.get("content")
+        else:
+            img_url = None
+
+        if img_url:
+            headers = {
+                "User-Agent": "MyImageDownloader/1.0 johndoe@example.org"
+            }
+            img_data = requests.get(img_url, headers=headers).content
             with open(f"{topic_name}/images/{keyword}.jpg", 'wb') as handler:
                 handler.write(img_data)
             print(f"Downloaded wiki image for {keyword}!")
@@ -67,8 +77,8 @@ def rename_videos(topic_name):
 
 if __name__ == '__main__':
     TOPIC_DATA = {
-        'name': 'celebrities',
+        'name': 'world_records',
     }
-    #download_wiki_images_from_topic(TOPIC_DATA)
+    download_wiki_images_from_topic(TOPIC_DATA)
     #resize_images(f"{TOPIC_DATA['name']}/images")
-    rename_videos(TOPIC_DATA['name'])
+    #rename_videos(TOPIC_DATA['name'])
