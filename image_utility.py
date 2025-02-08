@@ -77,8 +77,8 @@ def rename_videos(topic_name):
 
 if __name__ == '__main__':
     TOPIC_DATA = {
-        'name': 'world_records',
+        'name': 'video_games',
     }
-    #download_wiki_images_from_topic(TOPIC_DATA)
+    download_wiki_images_from_topic(TOPIC_DATA)
     #resize_images(f"{TOPIC_DATA['name']}/images")
-    rename_videos(TOPIC_DATA['name'])
+    #rename_videos(TOPIC_DATA['name'])
