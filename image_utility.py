@@ -77,7 +77,7 @@ def rename_videos(topic_name):
 
 if __name__ == '__main__':
     TOPIC_DATA = {
-        'name': 'superheroes',
+        'name': 'mathematics',
     }
     #download_wiki_images_from_topic(TOPIC_DATA)
     #resize_images(f"{TOPIC_DATA['name']}/images")
