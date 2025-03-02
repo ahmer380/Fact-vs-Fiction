@@ -5,6 +5,7 @@ import pytz
 from datetime import datetime, timedelta
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
+import subprocess
 
 UNDERWATER_AND_SEA = "underwater_and_sea"
 COUNTRIES = "countries"
@@ -107,11 +108,13 @@ class YoutubeApiService:
                 "title": video.title,
                 "description": video.description,
                 "tags": video.tags,
-                "categoryId": 22 #change later?
+                "categoryId": 24 #Entertainment category
             },
             "status": {
                 "privacyStatus": "private",
-                "publishAt": video.upload_date
+                "publishAt": video.upload_date,
+                "selfDeclaredMadeForKids": False,
+                "containsSyntheticMedia": False
             }
         }
         request = self.authenticate.videos().insert(
@@ -167,21 +170,29 @@ class YoutubeApiService:
 def get_total_video_count(): #returns 203, although there are 204 videos
     return sum([len(os.listdir(f"{topic}/videos")) for topic in TOPICS]) // len(TOPICS) * len(TOPICS)
 
-def get_video_list(count=get_total_video_count(), start_index=0):
+def get_video_list(count=None, start_index=0):
+    if not count:
+        count = get_total_video_count()-start_index
     assert count > 0, "count must be greater than 0"
     assert start_index >= 0, "start_index must be greater than or equal to 0"
-    assert start_index + count <= get_total_video_count(), f"start_index + count must be less than or equal to total video count of {get_total_video_count()}"
+    assert start_index + count <= get_total_video_count(), f"start_index ({start_index}) + count ({count}) must be less than or equal to total video count of {get_total_video_count()}"
 
     return [Video(index) for index in range(start_index, start_index + count)]
 
+def resize_video_file(video: Video):
+    #The original video files are saved on the google drive, so we may overwrite these ones
+    command = f'ffmpeg -i "{video.path}" -vf pad=1080:2040:0:120:black -c:a copy "temp.mp4"'
+    subprocess.run(command, shell=True, check=True)
+    os.replace("temp.mp4", video.path)
+
 if __name__ == '__main__':
     youtubeAPIService = YoutubeApiService()
-    videos = get_video_list(count=1, start_index=youtubeAPIService.get_current_video_index())
+    videos = get_video_list(count=30, start_index=youtubeAPIService.get_current_video_index())
     for video in videos:
-        print(video)
         uploaded_video = youtubeAPIService.upload_video(video)
         youtubeAPIService.add_video_to_playlist(uploaded_video)
         print('\n')
 
-#TODO: See potential problem of video being chopped off by some screens
+#30 Videos schedule to be updloaded to youtube so far
 #TODO: Thumbnails? Otherwise just do set them manually
+#TODO: Scheduling date may become problematic if the script is not run on the day of the first upload
