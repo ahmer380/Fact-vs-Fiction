@@ -44,9 +44,9 @@ class Video:
         self.youtube_id = None
     
     def generate_upload_date(self, video_index):
-        HOUR_TO_UPLOAD = 10
+        HOUR_TO_UPLOAD = 16
         FIRST_UPLOAD_DATE = datetime.now(pytz.timezone('Europe/London')) + timedelta(days=1)
-        upload_date =  (FIRST_UPLOAD_DATE + timedelta(days=video_index)).replace(hour=HOUR_TO_UPLOAD, minute=0, second=0, microsecond=0)
+        upload_date =  (FIRST_UPLOAD_DATE + timedelta(days=video_index-selectedAPIService.current_video_index)).replace(hour=HOUR_TO_UPLOAD, minute=0, second=0, microsecond=0)
         return upload_date.isoformat()
     
     def generate_tags(self):
@@ -72,10 +72,10 @@ class Video:
             SUPERHEROES: f"Fun Facts about {self.name}! 🦸",
             MATHEMATICS: f"Quick Math Quiz! Beat the Clock! ⏳ (Part {self.name[11:].lstrip('0')})",
         }
-        return f"{TITLE_TEMPLATES[self.topic]} {" ".join(self.tags)}"
+        return TITLE_TEMPLATES[self.topic]
 
     def generate_description(self): #TODO: Link to other social medias when they are created
-        return f"like & subscribe :)"
+        return f"LIKE the short and hit the SUBSCRIBE button if you would like to learn more about the blueprint of our world! 🔥 \n {" ".join(self.tags)}"
     
 class YoutubeApiService:
     def __init__(self):
@@ -89,6 +89,7 @@ class YoutubeApiService:
             MATHEMATICS: "PLF7zIEyatLciRbZ71hEhWyCtwEOKRZmU_"
         }
         self.authenticate = self.authenticate()
+        self.current_video_index = self.generate_current_video_index()
     
     def authenticate(self):
         client_secret_file_path = "youtube_client_credentials.json"
@@ -112,7 +113,7 @@ class YoutubeApiService:
             },
             "status": {
                 "privacyStatus": "private",
-                "publishAt": video.upload_date,
+                "publishAt": video.upload_date, 
                 "selfDeclaredMadeForKids": False,
                 "containsSyntheticMedia": False
             }
@@ -155,7 +156,7 @@ class YoutubeApiService:
 
         return video
 
-    def get_current_video_index(self):
+    def generate_current_video_index(self):
         youtube_upload_count = 0
         for playlist_id in self.playlist_ids.values():
             request = self.authenticate.playlistItems().list(
@@ -186,13 +187,12 @@ def resize_video_file(video: Video):
     os.replace("temp.mp4", video.path)
 
 if __name__ == '__main__':
-    youtubeAPIService = YoutubeApiService()
-    videos = get_video_list(count=30, start_index=youtubeAPIService.get_current_video_index())
+    selectedAPIService = YoutubeApiService()
+    videos = get_video_list(count=30, start_index=selectedAPIService.current_video_index)
     for video in videos:
-        uploaded_video = youtubeAPIService.upload_video(video)
-        youtubeAPIService.add_video_to_playlist(uploaded_video)
+        uploaded_video = selectedAPIService.upload_video(video)
+        selectedAPIService.add_video_to_playlist(uploaded_video)
         print('\n')
 
-#30 Videos schedule to be updloaded to youtube so far
+#57 Videos schedule to be uploaded to youtube so far
 #TODO: Thumbnails? Otherwise just do set them manually
-#TODO: Scheduling date may become problematic if the script is not run on the day of the first upload
