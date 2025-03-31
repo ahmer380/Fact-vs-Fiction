@@ -1,11 +1,13 @@
-import os
-import google_auth_oauthlib.flow
-import googleapiclient.http
-import pytz
-from datetime import datetime, timedelta
 import google_auth_oauthlib.flow
 import googleapiclient.discovery
+import googleapiclient.http
+import json
+import os
+import pytz
+import requests
+import secrets
 import subprocess
+from datetime import datetime, timedelta
 
 UNDERWATER_AND_SEA = "underwater_and_sea"
 COUNTRIES = "countries"
@@ -130,7 +132,7 @@ class YoutubeApiService:
         video.youtube_id = response["id"]
         print(f"{video.name} uploaded to Youtube")
         
-        return video
+        return self.add_video_to_playlist(video)
 
     def add_video_to_playlist(self, video: Video):
         assert video.youtube_id is not None, "Video must be uploaded to Youtube before adding to playlist"
@@ -168,6 +170,66 @@ class YoutubeApiService:
         
         return youtube_upload_count
 
+class TikTokApiService:
+    def __init__(self):
+        self.access_token = self.authenticate()
+        self.current_video_index = self.generate_current_video_index()
+    
+    def authenticate(self):
+        with open("tiktok_client_credentials.json", "r") as file:
+            tiktok_credentials = json.load(file)
+            if tiktok_credentials.get("cached_access_token") and tiktok_credentials["cached_access_token"]["expires_at"] > datetime.now().timestamp():
+                return tiktok_credentials["cached_access_token"]["access_token"]
+
+        #1. Get the authorisation code
+        authorisation_url = "".join([
+            f"https://www.tiktok.com/v2/auth/authorize/?",
+            f"client_key={tiktok_credentials['web']['client_key']}&",
+            f"scope=video.list,video.publish,video.upload&",
+            f"redirect_uri={tiktok_credentials['web']['redirect_uri']}&",
+            f"state={secrets.token_urlsafe(30)}&",
+            f"response_type=code",
+        ])
+        print("Please authorise uploading to TikTok by:")
+        print(f"Visiting the following URL and accepting the permissions: {authorisation_url}")
+        print("Then copy the authorisation code from the redirected URL and paste it here:")
+        authorisation_code = input("Authorisation code: ")
+
+        #2. Use the authorisation code to get the access token
+        token_exchange_payload = {
+            f"client_key": tiktok_credentials["web"]["client_key"],
+            f"client_secret": tiktok_credentials["web"]["client_secret"],
+            f"code": authorisation_code,
+            f"grant_type": "authorization_code",
+            f"redirect_uri": tiktok_credentials["web"]["redirect_uri"],
+        }
+        token_exhchange_response = requests.post(
+            "https://open.tiktokapis.com/v2/oauth/token/",
+            data=token_exchange_payload,
+            headers={"Content-Type": "application/x-www-form-urlencoded"}
+        ).json()
+        if token_exhchange_response.get("error"):
+            raise Exception(f"Error getting access token: {token_exhchange_response["error_description"]} \n Are you sure you pasted the correct authorisation code?")
+
+        
+        #3. Write access token to "tiktok_client_credentials.json"
+        with open("tiktok_client_credentials.json", "w") as file:
+            tiktok_credentials["cached_access_token"] = {
+                "access_token": token_exhchange_response["access_token"],
+                "expires_in": datetime.now().timestamp() + token_exhchange_response["expires_at"]
+            }
+            json.dump(tiktok_credentials, file, indent=4)
+        
+        print("New access token saved to tiktok_client_credentials.json! This will last for 24 hours.")
+        return token_exhchange_response["access_token"]
+
+    def upload_video(self, video: Video): #TODO: Upload video to TikTok
+        print(f"{video.name} uploaded to TikTok")
+        return video
+    
+    def generate_current_video_index(self): #TODO: Get the current video index from TikTok
+        return 0 
+    
 def get_total_video_count(): #returns 203, although there are 204 videos
     return sum([len(os.listdir(f"{topic}/videos")) for topic in TOPICS]) // len(TOPICS) * len(TOPICS)
 
@@ -187,12 +249,10 @@ def resize_video_file(video: Video):
     os.replace("temp.mp4", video.path)
 
 if __name__ == '__main__':
-    selectedAPIService = YoutubeApiService()
+    selectedAPIService = TikTokApiService()
     videos = get_video_list(count=30, start_index=selectedAPIService.current_video_index)
     for video in videos:
         uploaded_video = selectedAPIService.upload_video(video)
-        selectedAPIService.add_video_to_playlist(uploaded_video)
         print('\n')
 
-#57 Videos schedule to be uploaded to youtube so far
-#TODO: Thumbnails? Otherwise just do set them manually
+#57 Videos uploaded to youtube so far
