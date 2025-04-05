@@ -9,6 +9,8 @@ import secrets
 import subprocess
 from datetime import datetime, timedelta
 
+VIDEO_LIST_RELPATH = "videos"
+
 UNDERWATER_AND_SEA = "underwater_and_sea"
 COUNTRIES = "countries"
 CELEBRITIES = "celebrities"
@@ -16,6 +18,7 @@ WORLD_RECORDS = "world_records"
 VIDEO_GAMES = "video_games"
 SUPERHEROES = "superheroes"
 MATHEMATICS = "mathematics"
+
 TOPICS = [UNDERWATER_AND_SEA, COUNTRIES, CELEBRITIES, WORLD_RECORDS, VIDEO_GAMES, SUPERHEROES, MATHEMATICS]
 
 class Video:
@@ -33,8 +36,8 @@ class Video:
     def __init__(self, video_index):
         #set the core attributes for the video object
         self.topic = TOPICS[video_index % len(TOPICS)]
-        self.name = os.listdir(f"{self.topic}/videos")[video_index // len(TOPICS)].split(".")[0]
-        self.path = f"{self.topic}/videos/{self.name}.mp4"
+        self.name = os.listdir(f"{self.topic}/{VIDEO_LIST_RELPATH}")[video_index // len(TOPICS)].split(".")[0]
+        self.path = f"{self.topic}/{VIDEO_LIST_RELPATH}/{self.name}.mp4"
         self.upload_date = self.generate_upload_date(video_index)
 
         #set the genre-specific attributes for the video object
@@ -216,7 +219,7 @@ class TikTokApiService:
         with open("tiktok_client_credentials.json", "w") as file:
             tiktok_credentials["cached_access_token"] = {
                 "access_token": token_exhchange_response["access_token"],
-                "expires_in": datetime.now().timestamp() + token_exhchange_response["expires_at"]
+                "expires_at": datetime.now().timestamp() + token_exhchange_response["expires_in"]
             }
             json.dump(tiktok_credentials, file, indent=4)
         
@@ -231,7 +234,7 @@ class TikTokApiService:
         return 0 
     
 def get_total_video_count(): #returns 203, although there are 204 videos
-    return sum([len(os.listdir(f"{topic}/videos")) for topic in TOPICS]) // len(TOPICS) * len(TOPICS)
+    return sum([len(os.listdir(f"{topic}/{VIDEO_LIST_RELPATH}")) for topic in TOPICS]) // len(TOPICS) * len(TOPICS)
 
 def get_video_list(count=None, start_index=0):
     if not count:
@@ -249,10 +252,11 @@ def resize_video_file(video: Video):
     os.replace("temp.mp4", video.path)
 
 if __name__ == '__main__':
-    selectedAPIService = TikTokApiService()
+    selectedAPIService = TikTokApiService() #must be instantiated prior to generating the video objects
     videos = get_video_list(count=30, start_index=selectedAPIService.current_video_index)
     for video in videos:
         uploaded_video = selectedAPIService.upload_video(video)
         print('\n')
 
-#57 Videos uploaded to youtube so far
+#57 videos uploaded to youtube so far
+#0 videos uploaded to tiktok so far
