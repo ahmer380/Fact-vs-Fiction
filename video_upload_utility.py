@@ -9,7 +9,7 @@ import secrets
 import subprocess
 from datetime import datetime, timedelta
 
-VIDEO_LIST_RELPATH = "videos"
+VIDEO_LIST_RELPATH = "resized_videos"
 
 UNDERWATER_AND_SEA = "underwater_and_sea"
 COUNTRIES = "countries"
@@ -30,7 +30,8 @@ class Video:
             f"Upload Date: {self.upload_date}\n"
             f"Description: {self.description}\n"
             f"Tags: {self.tags}\n"
-            f"Youtube ID: {self.youtube_id}"
+            f"Youtube ID: {self.youtube_id}\n",
+            f"TikTok ID: {self.tiktok_id}"
         )
     
     def __init__(self, video_index):
@@ -47,6 +48,7 @@ class Video:
 
         #modified once upload to platforms
         self.youtube_id = None
+        self.tiktok_id = None
     
     def generate_upload_date(self, video_index):
         HOUR_TO_UPLOAD = 16
@@ -82,7 +84,7 @@ class Video:
     def generate_description(self): #TODO: Link to other social medias when they are created
         return f"LIKE the short and hit the SUBSCRIBE button if you would like to learn more about the blueprint of our world! 🔥 \n {" ".join(self.tags)}"
     
-class YoutubeApiService:
+class YoutubeApiService: #Manual Work: add thumbnail to video
     def __init__(self):
         self.playlist_ids = {
             UNDERWATER_AND_SEA: "PLF7zIEyatLch96oXpo_5T74lDKa0ixzTq",
@@ -173,7 +175,7 @@ class YoutubeApiService:
         
         return youtube_upload_count
 
-class TikTokApiService:
+class TikTokApiService: #Bottlenecks: Cannot schedule video, cannot add to playlist
     def __init__(self):
         self.access_token = self.authenticate()
         self.current_video_index = self.generate_current_video_index()
@@ -226,7 +228,53 @@ class TikTokApiService:
         print("New access token saved to tiktok_client_credentials.json! This will last for 24 hours.")
         return token_exhchange_response["access_token"]
 
-    def upload_video(self, video: Video): #TODO: Upload video to TikTok
+    def upload_video(self, video: Video): 
+        #1. Configuring the video metadata to get the upload_url
+        get_upload_url_headers = {
+            "Authorization": f"Bearer {self.access_token}",
+            "Content-Type": "application/json ;charset=UTF-8",
+        }
+        get_upload_url_request_body = {
+            "post_info": {
+                "privacy_level": "SELF_ONLY",
+                "title": video.title,
+                "disable_duet": False,
+                "disable_stitch": False,
+                "disable_comment": False,
+                "video_cover_timestamp_ms": 1400,
+                "brand_content_toggle": False,
+                "brand_organic_toggle": False,
+                "is_aigc": False,
+            },
+            "source_info": {
+                "source": "FILE_UPLOAD",
+                "video_size": os.path.getsize(video.path),
+                "chunk_size": os.path.getsize(video.path),
+                "total_chunk_count": 1,
+            }
+        }
+        get_upload_url_response = requests.post(
+            "https://open.tiktokapis.com/v2/post/publish/video/init/",
+            headers=get_upload_url_headers,
+            json=get_upload_url_request_body
+        ).json()
+        if get_upload_url_response['error']['code'] != "ok":
+            raise Exception(f"Error uploading video {video.name}: {get_upload_url_response['error']['message']}")
+        
+        #2. Sending the video's path to the upload_url
+        send_video_headers = {
+            "Content-Type": "video/mp4",
+            "Content-Length": str(os.path.getsize(video.path)),
+            "Content-Range": f"bytes 0-{os.path.getsize(video.path)-1}/{os.path.getsize(video.path)}",
+        }
+        send_video_response = requests.put(
+            get_upload_url_response['data']['upload_url'],
+            headers=send_video_headers,
+            data=open(video.path, "rb").read()
+        )
+        if send_video_response.status_code != 201:
+            raise Exception(f"Error uploading video {video.name}: {send_video_response.text}")
+
         print(f"{video.name} uploaded to TikTok")
         return video
     
@@ -253,10 +301,11 @@ def resize_video_file(video: Video):
 
 if __name__ == '__main__':
     selectedAPIService = TikTokApiService() #must be instantiated prior to generating the video objects
-    videos = get_video_list(count=30, start_index=selectedAPIService.current_video_index)
+    videos = get_video_list(count=1, start_index=selectedAPIService.current_video_index)
     for video in videos:
         uploaded_video = selectedAPIService.upload_video(video)
         print('\n')
 
 #57 videos uploaded to youtube so far
 #0 videos uploaded to tiktok so far
+#TODO: use query api to get number of tiktok videos uploaded so far
