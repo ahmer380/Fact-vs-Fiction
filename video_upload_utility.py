@@ -241,7 +241,7 @@ class TikTokApiService: #Bottlenecks: Cannot schedule video, cannot add to playl
                 "disable_duet": False,
                 "disable_stitch": False,
                 "disable_comment": False,
-                "video_cover_timestamp_ms": 1400,
+                "video_cover_timestamp_ms": 1500,
                 "brand_content_toggle": False,
                 "brand_organic_toggle": False,
                 "is_aigc": False,
@@ -278,8 +278,23 @@ class TikTokApiService: #Bottlenecks: Cannot schedule video, cannot add to playl
         print(f"{video.name} uploaded to TikTok")
         return video
     
-    def generate_current_video_index(self): #TODO: Get the current video index from TikTok
-        return 0 
+    def generate_current_video_index(self):
+        tiktok_upload_count = 0
+        cursor = None
+        while True:
+            get_video_list_response = requests.post(
+                "https://open.tiktokapis.com/v2/video/list/", #Only relies upon publically listed videos... not helpful!
+                headers={"Authorization": f"Bearer {self.access_token}", "Content-Type": "application/json"},
+                params={"fields": "id,title"},
+                json={"cursor": cursor, "max_count": 20}
+            ).json()
+            if get_video_list_response['error']['code'] != "ok":
+                raise Exception(f"Error connecting to TikTok list API: {get_video_list_response['error']['message']}")
+            print(get_video_list_response)
+            cursor = get_video_list_response['data']['cursor']
+            tiktok_upload_count += len(get_video_list_response['data']['videos'])
+            if not get_video_list_response['data']['has_more']:
+                return tiktok_upload_count
     
 def get_total_video_count(): #returns 203, although there are 204 videos
     return sum([len(os.listdir(f"{topic}/{VIDEO_LIST_RELPATH}")) for topic in TOPICS]) // len(TOPICS) * len(TOPICS)
@@ -307,5 +322,5 @@ if __name__ == '__main__':
         print('\n')
 
 #57 videos uploaded to youtube so far
-#0 videos uploaded to tiktok so far
+#7 videos uploaded to tiktok so far
 #TODO: use query api to get number of tiktok videos uploaded so far
