@@ -81,7 +81,7 @@ class Video:
         }
         return TITLE_TEMPLATES[self.topic]
 
-    def generate_description(self): #TODO: Link to other social medias when they are created
+    def generate_description(self):
         return f"LIKE the short and hit the SUBSCRIBE button if you would like to learn more about the blueprint of our world! 🔥 \n {" ".join(self.tags)}"
     
 class YoutubeApiService: #Manual Work: add thumbnail to video
@@ -290,7 +290,6 @@ class TikTokApiService: #Bottlenecks: Cannot schedule video, cannot add to playl
             ).json()
             if get_video_list_response['error']['code'] != "ok":
                 raise Exception(f"Error connecting to TikTok list API: {get_video_list_response['error']['message']}")
-            print(get_video_list_response)
             cursor = get_video_list_response['data']['cursor']
             tiktok_upload_count += len(get_video_list_response['data']['videos'])
             if not get_video_list_response['data']['has_more']:
@@ -316,11 +315,10 @@ def resize_video_file(video: Video):
 
 if __name__ == '__main__':
     selectedAPIService = TikTokApiService() #must be instantiated prior to generating the video objects
-    videos = get_video_list(count=1, start_index=selectedAPIService.current_video_index)
+    videos = get_video_list(count=3, start_index=selectedAPIService.current_video_index)
     for video in videos:
         uploaded_video = selectedAPIService.upload_video(video)
         print('\n')
 
 #57 videos uploaded to youtube so far
-#7 videos uploaded to tiktok so far
-#TODO: use query api to get number of tiktok videos uploaded so far
+#10 videos uploaded to tiktok so far
