@@ -2,6 +2,11 @@
 
 **The World Blueprint** aims to be an educational-driven content creator, intending to `explore every facet of Earth — from its rich history and diverse cultures to the scientific and environmental marvels shaping our lives. Whether you're a curious learner or simply passionate about understanding our planet, join us on a daily journey of discovery.` - *YouTube bio description*
 
+## Platforms
+- **YouTube:** [TheWorldBlueprint](https://www.youtube.com/@TheWorldBlueprint)
+- **TikTok:** [the_world_blueprint](https://www.tiktok.com/@the_world_blueprint)
+- **Instagram:** Coming soon!
+  
 ## Fact vs Fiction
 
 The contents of this repository have been utilised to assist the creation & uploading of the `Fact vs Fiction` playlists (the premiere genre for the channel). The format of each (subject) video is simple: display statement (5s), display answer proving/disproving of statement (7s), repeat 3 times ≈ 36s duration. 
@@ -14,11 +19,6 @@ These videos were creation in bulk (29 videos per topic, for 7 topics = 204 `Fac
   5. Run [Audio-Sync Pro script](https://www.youtube.com/watch?v=6IKuJBY_aPQ) in order to layer audio on to each .mp4 subject file in `topic`
   6. Run `rename_videos` function in `video_creation_utility.py` for each .mp4 subject file in `topic`
 
-Finally, after all .mp4 files have been generated, I run the `video_upload_utilities/upload.py` script in order to automatically (well sort of...) upload the files to their relevant platforms. Have a look at its separate [README.md file](dummy) for more information.
+Finally, after all .mp4 files have been generated, I run the `video_upload_utilities/upload.py` script in order to automatically (well sort of...) upload the files to their relevant platforms. Have a look at its separate [README.md file](https://github.com/ahmer380/Fact-vs-Fiction/blob/main/video_upload_utilities/README.md) for more information.
 
 **Fact vs Fiction Topics: [Underwater and Sea, Countries, Celebrities, World Records, Video Games, Superheroes, Mathematics], 204 videos scheduled for upload**
-
-## Platforms
-- **YouTube:** [TheWorldBlueprint](https://www.youtube.com/@TheWorldBlueprint)
-- **TikTok:** [the_world_blueprint](https://www.tiktok.com/@the_world_blueprint)
-- **Instagram:** Coming soon!
