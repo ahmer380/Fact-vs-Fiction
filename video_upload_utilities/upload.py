@@ -181,7 +181,7 @@ class TikTokApiService: #Bottlenecks: Cannot schedule video, cannot add to playl
         self.current_video_index = self.generate_current_video_index()
     
     def authenticate(self):
-        with open("tiktok_client_credentials.json", "r") as file:
+        with open("video_upload_utilities/tiktok_client_credentials.json", "r") as file:
             tiktok_credentials = json.load(file)
             if tiktok_credentials.get("cached_access_token") and tiktok_credentials["cached_access_token"]["expires_at"] > datetime.now().timestamp():
                 return tiktok_credentials["cached_access_token"]["access_token"]
@@ -218,7 +218,7 @@ class TikTokApiService: #Bottlenecks: Cannot schedule video, cannot add to playl
 
         
         #3. Write access token to "tiktok_client_credentials.json"
-        with open("tiktok_client_credentials.json", "w") as file:
+        with open("video_upload_utilities/tiktok_client_credentials.json", "w") as file:
             tiktok_credentials["cached_access_token"] = {
                 "access_token": token_exhchange_response["access_token"],
                 "expires_at": datetime.now().timestamp() + token_exhchange_response["expires_in"]
@@ -315,10 +315,10 @@ def resize_video_file(video: Video):
 
 if __name__ == '__main__':
     selectedAPIService = TikTokApiService() #must be instantiated prior to generating the video objects
-    videos = get_video_list(count=3, start_index=selectedAPIService.current_video_index)
+    videos = get_video_list(count=1, start_index=selectedAPIService.current_video_index)
     for video in videos:
         uploaded_video = selectedAPIService.upload_video(video)
         print('\n')
 
 #57 videos uploaded to youtube so far
-#10 videos uploaded to tiktok so far
+#12 videos uploaded to tiktok so far
