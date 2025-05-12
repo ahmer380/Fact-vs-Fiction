@@ -183,50 +183,22 @@ class TikTokApiService: #Bottlenecks: Cannot schedule video, cannot add to playl
     def authenticate(self):
         with open("video_upload_utilities/tiktok_client_credentials.json", "r") as file:
             tiktok_credentials = json.load(file)
-            if tiktok_credentials.get("cached_access_token") and tiktok_credentials["cached_access_token"]["expires_at"] > datetime.now().timestamp():
-                return tiktok_credentials["cached_access_token"]["access_token"]
 
-        #1. Get the authorisation code
-        authorisation_url = "".join([
-            f"https://www.tiktok.com/v2/auth/authorize/?",
-            f"client_key={tiktok_credentials['web']['client_key']}&",
-            f"scope=video.list,video.publish,video.upload&",
-            f"redirect_uri={tiktok_credentials['web']['redirect_uri']}&",
-            f"state={secrets.token_urlsafe(30)}&",
-            f"response_type=code",
-        ])
-        print("Please authorise uploading to TikTok by:")
-        print(f"Visiting the following URL and accepting the permissions: {authorisation_url}")
-        print("Then copy the authorisation code from the redirected URL and paste it here:")
-        authorisation_code = input("Authorisation code: ")
-
-        #2. Use the authorisation code to get the access token
-        token_exchange_payload = {
+        token_refresh_payload = {
             f"client_key": tiktok_credentials["web"]["client_key"],
             f"client_secret": tiktok_credentials["web"]["client_secret"],
-            f"code": authorisation_code,
-            f"grant_type": "authorization_code",
-            f"redirect_uri": tiktok_credentials["web"]["redirect_uri"],
+            f"refresh_token": tiktok_credentials["web"]["refresh_token"],
+            f"grant_type": "refresh_token",
         }
-        token_exhchange_response = requests.post(
+        token_refresh_response = requests.post(
             "https://open.tiktokapis.com/v2/oauth/token/",
-            data=token_exchange_payload,
+            data=token_refresh_payload,
             headers={"Content-Type": "application/x-www-form-urlencoded"}
         ).json()
-        if token_exhchange_response.get("error"):
-            raise Exception(f"Error getting access token: {token_exhchange_response["error_description"]} \n Are you sure you pasted the correct authorisation code?")
+        if token_refresh_response.get("error"):
+            raise Exception(f"Error getting access token: {token_refresh_response["error_description"]}")
 
-        
-        #3. Write access token to "tiktok_client_credentials.json"
-        with open("video_upload_utilities/tiktok_client_credentials.json", "w") as file:
-            tiktok_credentials["cached_access_token"] = {
-                "access_token": token_exhchange_response["access_token"],
-                "expires_at": datetime.now().timestamp() + token_exhchange_response["expires_in"]
-            }
-            json.dump(tiktok_credentials, file, indent=4)
-        
-        print("New access token saved to tiktok_client_credentials.json! This will last for 24 hours.")
-        return token_exhchange_response["access_token"]
+        return token_refresh_response["access_token"]
 
     def upload_video(self, video: Video): 
         #1. Configuring the video metadata to get the upload_url
@@ -321,4 +293,4 @@ if __name__ == '__main__':
         print('\n')
 
 #57 videos uploaded to youtube so far
-#12 videos uploaded to tiktok so far
+#28 videos uploaded to tiktok so far
