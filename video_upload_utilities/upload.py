@@ -5,7 +5,6 @@ import json
 import os
 import pytz
 import requests
-import secrets
 import subprocess
 from datetime import datetime, timedelta
 
@@ -30,7 +29,7 @@ class Video:
             f"Upload Date: {self.upload_date}\n"
             f"Description: {self.description}\n"
             f"Tags: {self.tags}\n"
-            f"Youtube ID: {self.youtube_id}\n",
+            f"Youtube ID: {self.youtube_id}\n"
             f"TikTok ID: {self.tiktok_id}"
         )
     
@@ -51,7 +50,7 @@ class Video:
         self.tiktok_id = None
     
     def generate_upload_date(self, video_index):
-        HOUR_TO_UPLOAD = 16
+        HOUR_TO_UPLOAD = 20
         FIRST_UPLOAD_DATE = datetime.now(pytz.timezone('Europe/London')) + timedelta(days=1)
         upload_date =  (FIRST_UPLOAD_DATE + timedelta(days=video_index-selectedAPIService.current_video_index)).replace(hour=HOUR_TO_UPLOAD, minute=0, second=0, microsecond=0)
         return upload_date.isoformat()
@@ -99,7 +98,7 @@ class YoutubeApiService: #Manual Work: add thumbnail to video
         self.current_video_index = self.generate_current_video_index()
     
     def authenticate(self):
-        client_secret_file_path = "youtube_client_credentials.json"
+        client_secret_file_path = "video_upload_utilities/youtube_client_credentials.json"
         flow = google_auth_oauthlib.flow.InstalledAppFlow.from_client_secrets_file(
             client_secret_file_path, 
             scopes=[
@@ -171,7 +170,7 @@ class YoutubeApiService: #Manual Work: add thumbnail to video
                 playlistId=playlist_id
             )
             response = request.execute()
-            youtube_upload_count += len(response["items"])
+            youtube_upload_count += response["pageInfo"]["totalResults"]
         
         return youtube_upload_count
 
@@ -287,10 +286,10 @@ def resize_video_file(video: Video):
 
 if __name__ == '__main__':
     selectedAPIService = TikTokApiService() #must be instantiated prior to generating the video objects
-    videos = get_video_list(count=1, start_index=selectedAPIService.current_video_index)
+    videos = get_video_list(count=2, start_index=selectedAPIService.current_video_index)
     for video in videos:
         uploaded_video = selectedAPIService.upload_video(video)
         print('\n')
 
-#57 videos uploaded to youtube so far
-#28 videos uploaded to tiktok so far
+#67 videos uploaded to youtube so far
+#40 videos uploaded to tiktok so far
