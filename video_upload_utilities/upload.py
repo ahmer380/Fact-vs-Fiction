@@ -286,10 +286,10 @@ def resize_video_file(video: Video):
 
 if __name__ == '__main__':
     selectedAPIService = TikTokApiService() #must be instantiated prior to generating the video objects
-    videos = get_video_list(count=2, start_index=selectedAPIService.current_video_index)
+    videos = get_video_list(count=5, start_index=selectedAPIService.current_video_index)
     for video in videos:
         uploaded_video = selectedAPIService.upload_video(video)
         print('\n')
 
 #67 videos uploaded to youtube so far
-#40 videos uploaded to tiktok so far
+#98 videos uploaded to tiktok so far
