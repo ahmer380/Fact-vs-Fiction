@@ -83,7 +83,7 @@ class Video:
     def generate_description(self):
         return f"LIKE the short and hit the SUBSCRIBE button if you would like to learn more about the blueprint of our world! 🔥 \n {" ".join(self.tags)}"
     
-class YoutubeApiService: #Manual Work: add thumbnail to video
+class YoutubeApiService: #Manual Work: add thumbnail to video, max uploads per day = 10
     def __init__(self):
         self.playlist_ids = {
             UNDERWATER_AND_SEA: "PLF7zIEyatLch96oXpo_5T74lDKa0ixzTq",
@@ -285,11 +285,11 @@ def resize_video_file(video: Video):
     os.replace("temp.mp4", video.path)
 
 if __name__ == '__main__':
-    selectedAPIService = TikTokApiService() #must be instantiated prior to generating the video objects
-    videos = get_video_list(count=5, start_index=selectedAPIService.current_video_index)
+    selectedAPIService = YoutubeApiService() #must be instantiated prior to generating the video objects
+    videos = get_video_list(count=10, start_index=selectedAPIService.current_video_index)
     for video in videos:
         uploaded_video = selectedAPIService.upload_video(video)
         print('\n')
 
-#67 videos uploaded to youtube so far
-#98 videos uploaded to tiktok so far
+#87 videos uploaded to youtube so far
+#115 videos uploaded to tiktok so far
