@@ -285,11 +285,11 @@ def resize_video_file(video: Video):
     os.replace("temp.mp4", video.path)
 
 if __name__ == '__main__':
-    selectedAPIService = YoutubeApiService() #must be instantiated prior to generating the video objects
-    videos = get_video_list(count=10, start_index=selectedAPIService.current_video_index)
+    selectedAPIService = TikTokApiService() #must be instantiated prior to generating the video objects
+    videos = get_video_list(count=6, start_index=selectedAPIService.current_video_index)
     for video in videos:
         uploaded_video = selectedAPIService.upload_video(video)
         print('\n')
 
-#87 videos uploaded to youtube so far
-#115 videos uploaded to tiktok so far
+#127 videos uploaded to youtube so far
+#145 videos uploaded to tiktok so far
