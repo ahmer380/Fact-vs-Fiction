@@ -208,7 +208,7 @@ class TikTokApiService: #Bottlenecks: Cannot schedule video, cannot add to playl
         get_upload_url_request_body = {
             "post_info": {
                 "privacy_level": "SELF_ONLY",
-                "title": video.title,
+                "title": f"{video.title} {" ".join(video.tags)}",
                 "disable_duet": False,
                 "disable_stitch": False,
                 "disable_comment": False,
@@ -292,4 +292,4 @@ if __name__ == '__main__':
         print('\n')
 
 #127 videos uploaded to youtube so far
-#145 videos uploaded to tiktok so far
+#151 videos uploaded to tiktok so far
